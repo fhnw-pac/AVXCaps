@@ -1,7 +1,9 @@
 #include <intrin.h>
 #include <iostream>
 #include <map>
+
 auto checkCPUForFunctionality() {
+
     std::map<std::string, bool> capabilities{
         //  Misc.
         {"HW_MMX",false},
@@ -39,11 +41,13 @@ auto checkCPUForFunctionality() {
         {"HW_AVX512IFMA",false}, //  AVX512 Integer 52-bit Fused Multiply-Add
         {"HW_AVX512VBMI",false}, //  AVX512 Vector Byte Manipulation Instructions
     };
+
     int info[4];
     __cpuid(info, 0);
     int nIds = info[0];
     __cpuid(info, 0x80000000);
     unsigned nExIds = info[0];
+
     //  Detect Features
     if (nIds >= 0x00000001) {
         __cpuid(info, 0x00000001);
@@ -85,8 +89,10 @@ auto checkCPUForFunctionality() {
         capabilities["HW_FMA4"] = (info[2] & ((int)1 << 16)) != 0;
         capabilities["HW_XOP"] = (info[2] & ((int)1 << 11)) != 0;
     }
+
     return capabilities;
 }
+
 void checkForAVX() {
     bool HW_AVX = false, HW_AVX2 = false, HW_AVX512 = false;
     int info[4];
@@ -111,12 +117,13 @@ void checkForAVX() {
     std::cout << "AVX2: " << (HW_AVX2 ? "supported" : "Audio Video Xtreme 2 - WHAT?") << std::endl;
     std::cout << "AVX512: " << (HW_AVX512 ? "supported" : "No - Linus said this is stupid anyway") << std::endl;
 }
+
 int main() {
 
     // short check
     checkForAVX();
 
-    // check all
+    // check enabled
     std::cout << std::endl << "All CPU Capabilities: " << std::endl;
     auto allcaps = checkCPUForFunctionality();
     std::cout << std::endl << "enabled caps:" << std::endl;
@@ -124,6 +131,8 @@ int main() {
         if (c.second)
             std::cout << c.first << " ";
     }
+
+    // check disabled
     std::cout << std::endl << std::endl << "disabled caps:" << std::endl;
     for (auto c : allcaps) {
         if (!c.second)
