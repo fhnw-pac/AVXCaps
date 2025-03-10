@@ -40,6 +40,8 @@ auto checkCPUForFunctionality() {
         {"HW_AVX512DQ",false},   //  AVX512 Doubleword + Quadword
         {"HW_AVX512IFMA",false}, //  AVX512 Integer 52-bit Fused Multiply-Add
         {"HW_AVX512VBMI",false}, //  AVX512 Vector Byte Manipulation Instructions
+        // AVX10 support
+        {"HW_AVX10", false},
     };
 
     int info[4];
@@ -90,6 +92,10 @@ auto checkCPUForFunctionality() {
         capabilities["HW_XOP"] = (info[2] & ((int)1 << 11)) != 0;
     }
 
+    memset(info, 0, sizeof(int) * 4);
+    __cpuidex(info, 7, 1);
+    capabilities["HW_AVX10"] = (info[3] & (1 << 19)) != 0;
+
     return capabilities;
 }
 
@@ -118,13 +124,36 @@ void checkForAVX() {
     std::cout << "AVX512: " << (HW_AVX512 ? "supported" : "No - Linus said this is stupid anyway") << std::endl;
 }
 
+void checkForAVX10()
+{
+    int info[4] = { 0 };
+
+    memset(info, 0, sizeof(int) * 4);
+    __cpuidex(info, 7, 1);
+    if ((info[3] & (1 << 19)) == 0) {
+        std::cout << "AVX10: unsupported" << std::endl;
+        return;
+    }
+
+    memset(info, 0, sizeof(int) * 4);
+    __cpuidex(info, 0x24, 0x00);
+
+    int avx10Ver = static_cast<uint8_t>(info[1] & 0xFF);
+    std::cout << "AVX10: supported in version " << avx10Ver << std::endl;
+
+    std::cout << "AVX10: 128bit vector support = " << ((info[1] & (1 << 16)) != 0) << std::endl;
+    std::cout << "AVX10: 256bit vector support = " << ((info[1] & (1 << 17)) != 0) << std::endl;
+    std::cout << "AVX10: 512bit vector support = " << ((info[1] & (1 << 18)) != 0) << std::endl;
+}
+
 int main() {
 
-    // short check
+    // short check 
     checkForAVX();
+    checkForAVX10();
 
     // check enabled
-    std::cout << std::endl << "All CPU Capabilities: " << std::endl;
+    std::cout << std::endl << "All CPU Capabilities " << std::endl;
     auto allcaps = checkCPUForFunctionality();
     std::cout << std::endl << "enabled caps:" << std::endl;
     for (auto c : allcaps) {
